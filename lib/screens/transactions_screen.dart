@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_push_notifications_app/utils/text_styles.dart';
-import 'data/list_item.dart';
-import 'data/transaction_item.dart';
-import 'data/user_profile_item.dart';
+import '../data/list_item.dart';
+import '../data/transaction_item.dart';
+import '../data/user_profile_item.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({Key? key}) : super(key: key);

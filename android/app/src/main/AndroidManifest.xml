@@ -25,7 +25,7 @@
                 android:value="channel_test" />
             <meta-data
                 android:name="com.google.firebase.messaging.default_notification_icon"
-                android:resource="@drawable/notification" />
+                android:resource="@mipmap/ic_launcher" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

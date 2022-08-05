@@ -1,18 +1,25 @@
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_push_notifications_app/services/local_notifications_services.dart';
-import 'package:flutter_push_notifications_app/transactions_screen.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_push_notifications_app/screens/transactions_screen.dart';
 import 'package:flutter_push_notifications_app/utils/text_styles.dart';
-import 'color/material_color.dart';
-import 'data/list_item.dart';
-import 'data/transaction_item.dart';
-import 'data/user_profile_item.dart';
+import '../color/material_color.dart';
+import '../data/list_item.dart';
+import '../data/transaction_item.dart';
+import '../data/user_profile_item.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
+}
+
+Future<void> firebaseBackgroundMessageHandler(RemoteMessage? message) async {
+  log('Push Notification:: firebaseBackgroundMessageHandler: ${message?.data.toString()}');
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -77,41 +84,162 @@ class _HomeScreenState extends State<HomeScreen> {
         time: "19:20"),
   ];
 
+   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  var flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
+  Future<void> _initNotification() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings("@mipmap/ic_launcher");
+    final IOSInitializationSettings initializationSettingsIOS =
+        IOSInitializationSettings(
+            requestSoundPermission: false,
+            requestBadgePermission: false,
+            requestAlertPermission: false,
+            onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+    final MacOSInitializationSettings initializationSettingsMacOS =
+        MacOSInitializationSettings();
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS,
+            macOS: initializationSettingsMacOS);
+
+    // For Background
+    FirebaseMessaging?.onBackgroundMessage(firebaseBackgroundMessageHandler);
+
+    final bool? result = await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+    print('Notification Result: $result');
+
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onSelectNotification: selectNotification,
+    );
+
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((RemoteMessage? message) {
+      print('getInitialMessage()::');
+      _handleNotification(message);
+    });
+
+    // It will be called when app is in foreground
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('onMessage.listen()::$message');
+      RemoteNotification notification = message.notification!;
+      _handleNotification(message);
+      if (Platform.isAndroid) {
+        sendNotification(notification.hashCode, notification.title!,
+            notification.body!, json.encode(message.data));
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage? message) {
+      print('onMessageOpenedApp.listen()::');
+      _handleNotification(message);
+    });
+
+    _firebaseMessaging.requestPermission(sound: true, badge: true, alert: true);
+  }
+
+  _handleNotification(RemoteMessage? message) {
+    if (message != null && message.notification != null) {
+      RemoteNotification notification = message.notification!;
+      print(
+          '_handleNotification:: Title: ${notification.title} :: Body: ${notification.body}');
+      print('_handleNotification DATA: ${json.encode(message.data)}');
+    }
+  }
+
+  void selectNotification(String? payload) async {
+    log('selectNotification');
+    if (payload != null) {
+      log('notification payload: $payload');
+    }
+  }
+
+  void onDidReceiveLocalNotification(
+      int? id, String? title, String? body, String? payload) {
+    print('onDidReceiveLocalNotification:: Title: ${title} :: Body: ${body}');
+  }
+
+  Future<void> sendNotification(
+      int id, String title, String message, String payload) async {
+    print('sendNotification:: Title: ${title} :: Message: ${message}');
+    flutterLocalNotificationsPlugin.show(
+        id,
+        title,
+        message,
+        NotificationDetails(
+            android: AndroidNotificationDetails(
+              id.toString(),
+              title,
+              channelDescription: message,
+              //icon: 'launcher_icon',
+            ),
+            iOS: IOSNotificationDetails(
+              threadIdentifier: id.toString(),
+            )),
+        payload: payload);
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      "channel_test", // id
+      "High Importance Notifications", // title
+      channelDescription:
+          "This channel is used for important notifications.", // description
+      importance: Importance.max,
+      playSound: true,
+      ticker: 'ticker',
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin
+        .show(id, title, message, platformChannelSpecifics, payload: payload);
+  }
 
   @override
   void initState() {
-    LocalNotificationService.initialize(context);
+    _initNotification();
+    //LocalNotificationService.initialize(context);
 
     ///gives you the message on which user taps
     ///and it opened the app from terminated state
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
-      if(message != null){
-        final routeFromMessage = message.data["route"];
-        print("routeFromMessage is $routeFromMessage");
-        Navigator.of(context).pushNamed(routeFromMessage);
-      }
-    });
+    // FirebaseMessaging.instance.getInitialMessage().then((message) {
+    //   if(message != null){
+    //     final routeFromMessage = message.data["route"];
+    //     print("routeFromMessage is $routeFromMessage");
+    //     Navigator.of(context).pushNamed(routeFromMessage);
+    //   }
+    // });
 
 
 
     ///forground work
-    FirebaseMessaging.onMessage.listen((message) {
-      if(message.notification != null){
-        print(message.notification!.body);
-        print(message.notification!.title);
-      }
+    // FirebaseMessaging.onMessage.listen((message) {
+    //   if(message.notification != null){
+    //     print(message.notification!.body);
+    //     print(message.notification!.title);
+    //   }
 
-      LocalNotificationService.display(message);
-    });
+    //   LocalNotificationService.display(message);
+    // });
 
     ///When the app is in background but opened and user taps
     ///on the notification
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      final routeFromMessage = message.data["route"];
+    // FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    //   final routeFromMessage = message.data["route"];
 
-      Navigator.of(context).pushNamed(routeFromMessage);
-    });
+    //   Navigator.of(context).pushNamed(routeFromMessage);
+    // });
     super.initState();
   }
 
