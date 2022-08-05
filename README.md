@@ -13,12 +13,9 @@ A new flutter app for demonstrating Firebase Push Notifications.
      <td align="center" valign="center">Notification</td>
   </tr>
   <tr>
-    <td><img src="https://github.com/MarvelApps-Flutter/
-firebase_push_notification/blob/dev/screenshots/android/android1.png" height="480px"></td>
-    <td><img src="https://github.com/MarvelApps-Flutter/
-firebase_push_notification/blob/dev/screenshots/android/android2.png" height="480px"></td>
-    <td><img src="https://github.com/MarvelApps-Flutter/
-firebase_push_notification/blob/dev/screenshots/android/android3.png" height="480px"></td>
+    <td><img src="https://github.com/MarvelApps-Flutter/firebase_push_notification/blob/dev/screenshots/android/android1.png" height="480px"></td>
+    <td><img src="https://github.com/MarvelApps-Flutter/firebase_push_notification/blob/dev/screenshots/android/android2.png" height="480px"></td>
+    <td><img src="https://github.com/MarvelApps-Flutter/firebase_push_notification/blob/dev/screenshots/android/android3.png" height="480px"></td>
   </tr>
  </table>
 </br>
