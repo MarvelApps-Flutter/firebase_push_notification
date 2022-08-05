@@ -47,4 +47,4 @@ app.*.map.json
 
 
 #GoogleServiceInfo.plist
-ios/Runner/GoogleService-Info.plist
+ios/Runner/GoogleService-Infos.plist
