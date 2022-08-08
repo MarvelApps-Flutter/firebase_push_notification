@@ -1,9 +1,6 @@
 # Flutter Firebase Push Notifications
 A new flutter app for demonstrating Firebase Push Notifications.
 
-# Demo
-<img src="https://github.com/MarvelApps-Flutter/flutter_firebase_realtime_database/blob/master/screenshots/gif/demo.gif" height="480px"></td>
-
 # Android Screenshots
 
 <table>
